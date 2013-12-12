@@ -5,6 +5,7 @@
 # 3.Количество текстов разных жанров
 # 4.среднее число переводов на один оригинал  для разных направлений перевода
 # 5. статистика по всем метаданным, которые есть в корпусе (возраст, университет и т.п.)
+import codecs
 import os
 import logging
 
@@ -13,11 +14,10 @@ from counters import MetaCounter
 from counters import CommonCounter
 from counters import YearCounter
 
-TMX_FILE = u'C:\LTC\\ru-en_01-01.tmx'
 TXT_DIR_PATH = 'C:\LTC\\texts'
 
 class HeadFileInfo(object):
-    def __init__(self):
+    def __init__(self, filename):
         self.gender = None
         self.course = None
         self.state = None
@@ -28,13 +28,14 @@ class HeadFileInfo(object):
         self.type = None
         self.uni = None
         self.lang = None
+        self.filename = filename
 
 
 def get_head_file_info(filename, file_lang):
-    info = HeadFileInfo()
+    info = HeadFileInfo(filename)
     info.lang = file_lang if file_lang in ("EN", "RU") else None
 
-    with open(filename, "r") as f:
+    with codecs.open(filename, "r", encoding='utf-8') as f:
         for num, line in enumerate(f):
             line = line.strip()
             #if line:
@@ -70,7 +71,7 @@ def get_file_info(file_name, file_path):
             file_lang = parts[0][:2]
             info = get_head_file_info(file_path, file_lang)
             if info.type is None or info.lang is None:
-                logger.error("There is no lang or type parameter in '%s' head file", file_path)
+                logger.error(u"There is no lang or type parameter in '%s' head file", file_path)
                 return None
             else:
                 return info
@@ -84,22 +85,23 @@ def get_all_headers(directory):
     gender_values = ["M","F","None"]
     gender = TranslationMetaCounter(gender_values, "gender")
 
-    course_values = ['1f', '2f', '3f', '4f', '5f', '1p', '2p', '3p', '4p', '5p', '1nl', '2nl', '3nl', '4nl', '5nl']
-    course = TranslationMetaCounter(course_values, "course")
+    course = CommonCounter("course")
 
-    mark_values = ['1', '2', '3', '4', '5']
+    mark_values = ['1', '2', '3', '4', '5', "None"]
     mark = TranslationMetaCounter(mark_values, "mark")
 
-    state_values = ["Final", "Draft"]
+    state_values = ["Final", "Draft", "None"]
     state = TranslationMetaCounter(state_values,"state")
 
-    genre_values = ["Academic", "Informational", "Essay", "Interview", "Tech", "Fiction", "Educational", "Encyclopaedia", "Speech", "Letters", "Advertisement", "Review", "None"]
+    genre_values = ["Academic", "Informational", "Essay", "Interview", "Tech",
+                    "Fiction", "Educational", "Encyclopaedia", "Speech", "Letters",
+                    "Advertisement", "Review", "None"]
     genre = MetaCounter(genre_values, "genre")
 
-    stress_values = ["Routine", "Exam", "Contest"]
+    stress_values = ["Routine", "Exam", "Contest", "None"]
     stress = TranslationMetaCounter(stress_values, "stress")
 
-    place_values = ["Home", "Classroom"]
+    place_values = ["Home", "Classroom", "None"]
     place = TranslationMetaCounter(place_values, "place")
 
     year = YearCounter()
@@ -135,7 +137,7 @@ def get_all_headers(directory):
 
 if __name__ == "__main__":
     FORMAT = '%(levelname)s::%(asctime)s::%(message)s'
-    logging.basicConfig(format=FORMAT, level=logging.DEBUG)
+    logging.basicConfig(format=FORMAT, level=logging.DEBUG, filename='log/count_stat.log')
     logger = logging.getLogger("stat_logger")
     ru, en, gender, course, mark, state, genre, stress, place, year, uni = get_all_headers(TXT_DIR_PATH)
     print ru
