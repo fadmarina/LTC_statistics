@@ -10,6 +10,8 @@ import logging
 
 from counters import HeadFilesLangCounter, TranslationMetaCounter
 from counters import MetaCounter
+from counters import CommonCounter
+from counters import YearCounter
 
 TMX_FILE = u'C:\LTC\\ru-en_01-01.tmx'
 TXT_DIR_PATH = 'C:\LTC\\texts'
@@ -100,11 +102,9 @@ def get_all_headers(directory):
     place_values = ["Home", "Classroom"]
     place = TranslationMetaCounter(place_values, "place")
 
-    year_values = ["2007", "2008", "2009", "2010", "2011", "2012", "2013"]
-    year = TranslationMetaCounter(year_values, "year")
+    year = YearCounter()
 
-    uni_values = ["TSU", "MSU", "UdSU", "MAirI", "PermSU", "LUNN", "KSU", "HSE", "SSU", "UlSTU"]
-    uni  = TranslationMetaCounter(uni_values, "uni")
+    uni = CommonCounter("uni")
 
     for file_name in os.listdir(directory):
         file_path = os.path.join(directory, file_name)
@@ -112,15 +112,15 @@ def get_all_headers(directory):
             file_info = get_file_info(file_name, file_path)
             ru_headcounter.update(file_info)
             en_headcounter.update(file_info)
-            gender.meta_update(file_info)
-            course.meta_update(file_info)
-            mark.meta_update(file_info)
-            state.meta_update(file_info)
-            genre.meta_update(file_info)
-            stress.meta_update(file_info)
-            place.meta_update(file_info)
-            year.meta_update(file_info)
-            uni.meta_update(file_info)
+            gender.update(file_info)
+            course.update(file_info)
+            mark.update(file_info)
+            state.update(file_info)
+            genre.update(file_info)
+            stress.update(file_info)
+            place.update(file_info)
+            year.update(file_info)
+            uni.update(file_info)
 
     return ru_headcounter, en_headcounter, gender, course, mark, state, genre, stress, place, year, uni
 
