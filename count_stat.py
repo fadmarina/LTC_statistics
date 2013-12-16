@@ -3,11 +3,11 @@
 # 1.Статистика по дублям (TUVs с идентичным текстом и метаданными).
 # 2.Количество текстов и токенов с разбивкой "русский-английский" и "оригиналы-переводы"
 # 3.Количество текстов разных жанров
-# 4.среднее число переводов на один оригинал  для разных направлений перевода
 # 5. статистика по всем метаданным, которые есть в корпусе (возраст, университет и т.п.)
 import codecs
 import os
 import logging
+import re
 
 from counters import HeadFilesLangCounter, TranslationMetaCounter
 from counters import MetaCounter
@@ -15,6 +15,9 @@ from counters import CommonCounter
 from counters import YearCounter
 
 TXT_DIR_PATH = 'C:\LTC\\texts'
+#TXT_DIR_PATH = 'C:\GitHub\\LTC_statistics\\test_texts'
+tokens_RU = 0
+tokens_EN = 0
 
 class HeadFileInfo(object):
     def __init__(self, filename):
@@ -30,6 +33,29 @@ class HeadFileInfo(object):
         self.lang = None
         self.filename = filename
 
+def count_tokens(filepath, file_lang):
+    global tokens_EN
+    global tokens_RU
+    with codecs.open(filepath, "r") as f:
+        for line in f:
+            sentences = re.split(r'[\.\?\!]+', line)
+            for sentence in sentences:
+                #print sentence
+                words = re.split('[-\.,\?\!:;_()\[\]\'`"/\t\r\n\s]+', sentence)
+                res = []
+                for w in words:
+                    w = w.strip()
+                    if w:
+                        for i in w.split():
+                            res.append(i)
+                # for w in res:
+                #     print w, repr(w)
+                if file_lang == "EN":
+                    tokens_EN += len(res)
+                elif file_lang == "RU":
+                    tokens_RU += len(res)
+
+
 
 def get_head_file_info(filename, file_lang):
     info = HeadFileInfo(filename)
@@ -38,7 +64,6 @@ def get_head_file_info(filename, file_lang):
     with codecs.open(filename, "r", encoding='utf-8') as f:
         for num, line in enumerate(f):
             line = line.strip()
-            #if line:
             if num == 0:
                 info.gender = line
             elif num == 1:
@@ -67,14 +92,16 @@ def get_file_info(file_name, file_path):
     parts = file_name.split('.')
     if len(parts) >= 2:
         file_type = parts[1]
+        file_lang = parts[0][:2]
         if file_type == "head":
-            file_lang = parts[0][:2]
             info = get_head_file_info(file_path, file_lang)
             if info.type is None or info.lang is None:
                 logger.error(u"There is no lang or type parameter in '%s' head file", file_path)
                 return None
             else:
                 return info
+        elif parts[1] == "txt":
+            count_tokens(file_path, file_lang)
     return None
 
 
@@ -151,3 +178,5 @@ if __name__ == "__main__":
     print place
     print year
     print uni
+    # count_tokens('C:\GitHub\\LTC_statistics\\test_texts\\RU_1_1_2.txt', "RU")
+    print tokens_RU, tokens_EN
