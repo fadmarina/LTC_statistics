@@ -9,15 +9,18 @@ import os
 import logging
 import re
 
-from counters import HeadFilesLangCounter, TranslationMetaCounter
+from counters import HeadFilesLangCounter, TranslationMetaCounter, TokensCounter
 from counters import MetaCounter
 from counters import CommonCounter
 from counters import YearCounter
 
 TXT_DIR_PATH = 'C:\LTC\\texts'
 #TXT_DIR_PATH = 'C:\GitHub\\LTC_statistics\\test_texts'
-tokens_RU = 0
-tokens_EN = 0
+
+class SimpleFileInfo(object):
+    def __init__(self, file_path, file_lang):
+        self.lang = file_lang
+        self.file_path = file_path
 
 class HeadFileInfo(object):
     def __init__(self, filename):
@@ -32,29 +35,6 @@ class HeadFileInfo(object):
         self.uni = None
         self.lang = None
         self.filename = filename
-
-def count_tokens(filepath, file_lang):
-    global tokens_EN
-    global tokens_RU
-    with codecs.open(filepath, "r") as f:
-        for line in f:
-            sentences = re.split(r'[\.\?\!]+', line)
-            for sentence in sentences:
-                #print sentence
-                words = re.split('[-\.,\?\!:;_()\[\]\'`"/\t\r\n\s]+', sentence)
-                res = []
-                for w in words:
-                    w = w.strip()
-                    if w:
-                        for i in w.split():
-                            res.append(i)
-                # for w in res:
-                #     print w, repr(w)
-                if file_lang == "EN":
-                    tokens_EN += len(res)
-                elif file_lang == "RU":
-                    tokens_RU += len(res)
-
 
 
 def get_head_file_info(filename, file_lang):
@@ -101,7 +81,7 @@ def get_file_info(file_name, file_path):
             else:
                 return info
         elif parts[1] == "txt":
-            count_tokens(file_path, file_lang)
+            return SimpleFileInfo(file_path, file_lang)
     return None
 
 
@@ -132,26 +112,42 @@ def get_all_headers(directory):
     place = TranslationMetaCounter(place_values, "place")
 
     year = YearCounter()
-
     uni = CommonCounter("uni")
+    token_counter = TokensCounter()
 
     for file_name in os.listdir(directory):
         file_path = os.path.join(directory, file_name)
         if not os.path.isdir(file_path):
             file_info = get_file_info(file_name, file_path)
-            ru_headcounter.update(file_info)
-            en_headcounter.update(file_info)
-            gender.update(file_info)
-            course.update(file_info)
-            mark.update(file_info)
-            state.update(file_info)
-            genre.update(file_info)
-            stress.update(file_info)
-            place.update(file_info)
-            year.update(file_info)
-            uni.update(file_info)
+            if isinstance(file_info, HeadFileInfo):
+                ru_headcounter.update(file_info)
+                en_headcounter.update(file_info)
+                gender.update(file_info)
+                course.update(file_info)
+                mark.update(file_info)
+                state.update(file_info)
+                genre.update(file_info)
+                stress.update(file_info)
+                place.update(file_info)
+                year.update(file_info)
+                uni.update(file_info)
+            elif isinstance(file_info, SimpleFileInfo):
+                token_counter.update(file_info)
 
-    return ru_headcounter, en_headcounter, gender, course, mark, state, genre, stress, place, year, uni
+    return ru_headcounter, en_headcounter, gender, course, mark, state, genre, stress, place, year, uni, token_counter
+
+
+def get_page_html(counters):
+    html = u"""
+    <html>
+    <head><title>Статистика</title></head>
+    <body>
+        %s
+    </body>
+    <html>
+    """ % u'\n'.join([cnt.html() for cnt in counters])
+    with open("stat.html", "w") as page:
+        page.write(html.encode('utf8'))
 
 
 #количество текстов на русском языке
@@ -166,17 +162,20 @@ if __name__ == "__main__":
     FORMAT = '%(levelname)s::%(asctime)s::%(message)s'
     logging.basicConfig(format=FORMAT, level=logging.DEBUG, filename='log/count_stat.log')
     logger = logging.getLogger("stat_logger")
-    ru, en, gender, course, mark, state, genre, stress, place, year, uni = get_all_headers(TXT_DIR_PATH)
-    print ru
-    print en
-    print gender
-    print course
-    print mark
-    print state
-    print genre
-    print stress
-    print place
-    print year
-    print uni
-    # count_tokens('C:\GitHub\\LTC_statistics\\test_texts\\RU_1_1_2.txt', "RU")
-    print tokens_RU, tokens_EN
+    counters = get_all_headers(TXT_DIR_PATH)
+    get_page_html(counters)
+    print "END"
+    #ru, en, gender, course, mark, state, genre, stress, place, year, uni, tokens = get_all_headers(TXT_DIR_PATH)
+    # print ru
+    # print en
+    # print gender
+    # print course
+    # print mark
+    # print state
+    # print genre
+    # print stress
+    # print place
+    # print year
+    # print uni
+    # # count_tokens('C:\GitHub\\LTC_statistics\\test_texts\\RU_1_1_2.txt', "RU")
+    # print tokens
