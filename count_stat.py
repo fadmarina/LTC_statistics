@@ -7,7 +7,7 @@
 import codecs
 import os
 import logging
-import re
+from jinja2 import Environment, FileSystemLoader
 
 from counters import HeadFilesLangCounter, TranslationMetaCounter, TokensCounter
 from counters import MetaCounter
@@ -17,10 +17,12 @@ from counters import YearCounter
 TXT_DIR_PATH = 'C:\LTC\\texts'
 #TXT_DIR_PATH = 'C:\GitHub\\LTC_statistics\\test_texts'
 
+
 class SimpleFileInfo(object):
     def __init__(self, file_path, file_lang):
         self.lang = file_lang
         self.file_path = file_path
+
 
 class HeadFileInfo(object):
     def __init__(self, filename):
@@ -137,17 +139,14 @@ def get_all_headers(directory):
     return ru_headcounter, en_headcounter, gender, course, mark, state, genre, stress, place, year, uni, token_counter
 
 
-def get_page_html(counters):
-    html = u"""
-    <html>
-    <head><title>Статистика</title></head>
-    <body>
-        %s
-    </body>
-    <html>
-    """ % u'\n'.join([cnt.html() for cnt in counters])
-    with open("stat.html", "w") as page:
-        page.write(html.encode('utf8'))
+def get_page_html():
+    counters = get_all_headers(TXT_DIR_PATH)
+    env = Environment(loader=FileSystemLoader('templates'))
+    template = env.get_template('stat.html')
+    output = template.render(counters=counters)
+
+    with codecs.open("stat.html", "w", encoding='utf-8') as page:
+        page.write(output)
 
 
 #количество текстов на русском языке
@@ -162,8 +161,7 @@ if __name__ == "__main__":
     FORMAT = '%(levelname)s::%(asctime)s::%(message)s'
     logging.basicConfig(format=FORMAT, level=logging.DEBUG, filename='log/count_stat.log')
     logger = logging.getLogger("stat_logger")
-    counters = get_all_headers(TXT_DIR_PATH)
-    get_page_html(counters)
+    get_page_html()
     print "END"
     #ru, en, gender, course, mark, state, genre, stress, place, year, uni, tokens = get_all_headers(TXT_DIR_PATH)
     # print ru
