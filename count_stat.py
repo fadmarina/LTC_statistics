@@ -7,15 +7,16 @@
 import codecs
 import os
 import logging
-import re
 
 from counters import HeadFilesLangCounter, TranslationMetaCounter, TokensCounter
 from counters import MetaCounter
 from counters import CommonCounter
 from counters import YearCounter
 
-TXT_DIR_PATH = 'C:\LTC\\texts'
-#TXT_DIR_PATH = 'C:\GitHub\\LTC_statistics\\test_texts'
+from flask import Flask, render_template
+
+TXT_DIR_PATH = 'var/www/texts'
+LOG_FILE = 'log/count_stat.log'
 
 class SimpleFileInfo(object):
     def __init__(self, file_path, file_lang):
@@ -66,7 +67,6 @@ def get_head_file_info(filename, file_lang):
             elif num == 9:
                 info.uni = line
     return info
-
 
 def get_file_info(file_name, file_path):
     parts = file_name.split('.')
@@ -136,35 +136,27 @@ def get_all_headers(directory):
 
     return ru_headcounter, en_headcounter, gender, course, mark, state, genre, stress, place, year, uni, token_counter
 
+app = Flask(__name__)
 
-def get_page_html(counters):
-    html = u"""
-    <html>
-    <head><title>Статистика</title></head>
-    <body>
-        %s
-    </body>
-    <html>
-    """ % u'\n'.join([cnt.html() for cnt in counters])
-    with open("stat.html", "w") as page:
-        page.write(html.encode('utf8'))
+@app.route('/statistics', methods=['GET'])
+def statistics():
+    counters = get_all_headers(TXT_DIR_PATH)
+    context = {
+        "results": counters
+    }
+    return render_template("stat.html", **context)
 
 
-#количество текстов на русском языке
-#количество текстов на английском языке
-
-#/var/www/texts - path to txts
-
-#количество английских оригиналов и переводов
-#количество русских оригиналов и переводов
 
 if __name__ == "__main__":
     FORMAT = '%(levelname)s::%(asctime)s::%(message)s'
-    logging.basicConfig(format=FORMAT, level=logging.DEBUG, filename='log/count_stat.log')
+    logging.basicConfig(format=FORMAT, level=logging.DEBUG, filename=LOG_FILE)
     logger = logging.getLogger("stat_logger")
-    counters = get_all_headers(TXT_DIR_PATH)
-    get_page_html(counters)
-    print "END"
+    # counters = get_all_headers(TXT_DIR_PATH)
+    # get_page_html(counters)
+    # print "END"
+    app.run(port=8082, debug=True)
+
     #ru, en, gender, course, mark, state, genre, stress, place, year, uni, tokens = get_all_headers(TXT_DIR_PATH)
     # print ru
     # print en

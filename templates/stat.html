@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+     <title>Статистика</title>
+</head>
+<body>
+    {% if results %}
+              {% for item in results %}
+                <p>{{ item.html()|safe }}</p>
+            {% endfor %}
+    {% else %}
+            <p>Nothing found for search query: {{results}}.</p>
+    {% endif %}
+
+</body>
+</html>
