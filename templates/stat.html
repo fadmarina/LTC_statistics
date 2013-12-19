@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-     <title>Статистика</title>
+    <title>Статистика</title>
+    <meta charset="UTF-8">
 </head>
 <body>
-    {% if results %}
-              {% for item in results %}
-                <p>{{ item.html()|safe }}</p>
-            {% endfor %}
+    {% if counters %}
+        {% for item in counters %}
+            {{ item.html()|safe }}
+        {% endfor %}
     {% else %}
-            <p>Nothing found for search query: {{results}}.</p>
+        <p>Nothing found for search query: {{results}}.</p>
     {% endif %}
-
 </body>
 </html>

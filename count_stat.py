@@ -8,6 +8,9 @@ import codecs
 import os
 import logging
 
+from jinja2 import Environment, FileSystemLoader
+
+
 from counters import HeadFilesLangCounter, TranslationMetaCounter, TokensCounter
 from counters import MetaCounter
 from counters import CommonCounter
@@ -18,10 +21,12 @@ from flask import Flask, render_template
 TXT_DIR_PATH = 'var/www/texts'
 LOG_FILE = 'log/count_stat.log'
 
+
 class SimpleFileInfo(object):
     def __init__(self, file_path, file_lang):
         self.lang = file_lang
         self.file_path = file_path
+
 
 class HeadFileInfo(object):
     def __init__(self, filename):
@@ -146,6 +151,15 @@ def statistics():
     }
     return render_template("stat.html", **context)
 
+
+def get_page_html():
+    counters = get_all_headers(TXT_DIR_PATH)
+    env = Environment(loader=FileSystemLoader('templates'))
+    template = env.get_template('stat.html')
+    output = template.render(counters=counters)
+
+    with codecs.open("stat.html", "w", encoding='utf-8') as page:
+        page.write(output)
 
 
 if __name__ == "__main__":
